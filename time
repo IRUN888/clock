@@ -1,0 +1,234 @@
+import { useState, useEffect } from "react";
+
+const FONT_URL = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap";
+
+export default function DigitalClock() {
+  const [time, setTime] = useState(new Date());
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href = FONT_URL;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    link.onload = () => setLoaded(true);
+    setTimeout(() => setLoaded(true), 800);
+
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const rawHours = time.getHours();
+  const ampm = rawHours >= 12 ? "PM" : "AM";
+  const hours12 = rawHours % 12 || 12;
+  const hours = hours12.toString().padStart(2, "0");
+  const minutes = time.getMinutes().toString().padStart(2, "0");
+  const seconds = time.getSeconds().toString().padStart(2, "0");
+
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const dayName = dayNames[time.getDay()];
+  const month = monthNames[time.getMonth()];
+  const date = time.getDate();
+  const year = time.getFullYear();
+
+  const suffix = date === 1 || date === 21 || date === 31 ? "st" : date === 2 || date === 22 ? "nd" : date === 3 || date === 23 ? "rd" : "th";
+
+  const progress = ((time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) / 86400) * 100;
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#0a0a0f",
+      fontFamily: "'JetBrains Mono', monospace",
+      overflow: "hidden",
+      position: "relative",
+    }}>
+      {/* Subtle grid background */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
+        `,
+        backgroundSize: "40px 40px",
+      }} />
+
+      {/* Soft radial glow */}
+      <div style={{
+        position: "absolute",
+        width: "600px",
+        height: "600px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(99,180,255,0.06) 0%, transparent 70%)",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      }} />
+
+      <div style={{
+        position: "relative",
+        textAlign: "center",
+        opacity: loaded ? 1 : 0,
+        transform: loaded ? "translateY(0)" : "translateY(12px)",
+        transition: "all 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+      }}>
+        {/* Day label */}
+        <div style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: "13px",
+          fontWeight: 300,
+          letterSpacing: "6px",
+          textTransform: "uppercase",
+          color: "rgba(99,180,255,0.5)",
+          marginBottom: "28px",
+        }}>
+          {dayName}
+        </div>
+
+        {/* Main time display */}
+        <div style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "center",
+          gap: "4px",
+          lineHeight: 1,
+        }}>
+          <TimeDigit value={hours} />
+          <Colon time={time} />
+          <TimeDigit value={minutes} />
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            marginLeft: "10px",
+            marginBottom: "6px",
+            alignSelf: "flex-end",
+          }}>
+            <span style={{
+              fontSize: "14px",
+              fontWeight: 400,
+              color: "rgba(99,180,255,0.45)",
+              letterSpacing: "2px",
+              lineHeight: 1,
+              marginBottom: "4px",
+            }}>
+              {ampm}
+            </span>
+            <span style={{
+              fontSize: "28px",
+              fontWeight: 300,
+              color: "rgba(255,255,255,0.2)",
+              fontVariantNumeric: "tabular-nums",
+              minWidth: "48px",
+              textAlign: "left",
+              lineHeight: 1,
+            }}>
+              {seconds}
+            </span>
+          </div>
+        </div>
+
+        {/* Date display */}
+        <div style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: "17px",
+          fontWeight: 300,
+          color: "rgba(255,255,255,0.35)",
+          marginTop: "32px",
+          letterSpacing: "1px",
+        }}>
+          {month} {date}{suffix}, {year}
+        </div>
+
+        {/* Day progress bar */}
+        <div style={{
+          marginTop: "28px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "12px",
+        }}>
+          <span style={{
+            fontSize: "9px",
+            fontWeight: 400,
+            color: "rgba(255,255,255,0.15)",
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+          }}>
+            DAY
+          </span>
+          <div style={{
+            width: "160px",
+            height: "2px",
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: "1px",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              height: "100%",
+              width: `${progress}%`,
+              background: "linear-gradient(90deg, rgba(99,180,255,0.3), rgba(99,180,255,0.6))",
+              borderRadius: "1px",
+              transition: "width 1s linear",
+            }} />
+          </div>
+          <span style={{
+            fontSize: "9px",
+            fontWeight: 400,
+            color: "rgba(255,255,255,0.15)",
+            letterSpacing: "1px",
+            fontVariantNumeric: "tabular-nums",
+            minWidth: "32px",
+          }}>
+            {progress.toFixed(0)}%
+          </span>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.2; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function TimeDigit({ value }) {
+  return (
+    <span style={{
+      fontSize: "96px",
+      fontWeight: 300,
+      color: "rgba(255,255,255,0.9)",
+      fontVariantNumeric: "tabular-nums",
+      letterSpacing: "-2px",
+    }}>
+      {value}
+    </span>
+  );
+}
+
+function Colon({ time }) {
+  return (
+    <span style={{
+      fontSize: "80px",
+      fontWeight: 200,
+      color: "rgba(99,180,255,0.5)",
+      animation: "blink 2s ease-in-out infinite",
+      marginLeft: "2px",
+      marginRight: "2px",
+      lineHeight: 1,
+      position: "relative",
+      top: "-4px",
+    }}>
+      :
+    </span>
+  );
+}
