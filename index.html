@@ -1,234 +1,240 @@
-import { useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clock</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-const FONT_URL = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap";
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0f;
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+      position: relative;
+    }
 
-export default function DigitalClock() {
-  const [time, setTime] = useState(new Date());
-  const [loaded, setLoaded] = useState(false);
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
 
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.href = FONT_URL;
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-    link.onload = () => setLoaded(true);
-    setTimeout(() => setLoaded(true), 800);
+    .glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,180,255,0.06) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 
-    const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+    .clock-wrapper {
+      position: relative;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
 
-  const rawHours = time.getHours();
-  const ampm = rawHours >= 12 ? "PM" : "AM";
-  const hours12 = rawHours % 12 || 12;
-  const hours = hours12.toString().padStart(2, "0");
-  const minutes = time.getMinutes().toString().padStart(2, "0");
-  const seconds = time.getSeconds().toString().padStart(2, "0");
+    .clock-wrapper.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    .day-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: rgba(99,180,255,0.5);
+      margin-bottom: 28px;
+    }
 
-  const dayName = dayNames[time.getDay()];
-  const month = monthNames[time.getMonth()];
-  const date = time.getDate();
-  const year = time.getFullYear();
+    .time-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 4px;
+      line-height: 1;
+    }
 
-  const suffix = date === 1 || date === 21 || date === 31 ? "st" : date === 2 || date === 22 ? "nd" : date === 3 || date === 23 ? "rd" : "th";
+    .time-digit {
+      font-size: 96px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.9);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -2px;
+    }
 
-  const progress = ((time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) / 86400) * 100;
+    .colon {
+      font-size: 80px;
+      font-weight: 200;
+      color: rgba(99,180,255,0.5);
+      animation: blink 2s ease-in-out infinite;
+      margin: 0 2px;
+      line-height: 1;
+      position: relative;
+      top: -4px;
+    }
 
-  return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "#0a0a0f",
-      fontFamily: "'JetBrains Mono', monospace",
-      overflow: "hidden",
-      position: "relative",
-    }}>
-      {/* Subtle grid background */}
-      <div style={{
-        position: "absolute",
-        inset: 0,
-        backgroundImage: `
-          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
-        `,
-        backgroundSize: "40px 40px",
-      }} />
+    .side-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-left: 10px;
+      margin-bottom: 6px;
+      align-self: flex-end;
+    }
 
-      {/* Soft radial glow */}
-      <div style={{
-        position: "absolute",
-        width: "600px",
-        height: "600px",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(99,180,255,0.06) 0%, transparent 70%)",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-      }} />
+    .ampm {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(99,180,255,0.45);
+      letter-spacing: 2px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
 
-      <div style={{
-        position: "relative",
-        textAlign: "center",
-        opacity: loaded ? 1 : 0,
-        transform: loaded ? "translateY(0)" : "translateY(12px)",
-        transition: "all 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
-      }}>
-        {/* Day label */}
-        <div style={{
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: "13px",
-          fontWeight: 300,
-          letterSpacing: "6px",
-          textTransform: "uppercase",
-          color: "rgba(99,180,255,0.5)",
-          marginBottom: "28px",
-        }}>
-          {dayName}
-        </div>
+    .seconds {
+      font-size: 28px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.2);
+      font-variant-numeric: tabular-nums;
+      min-width: 48px;
+      text-align: left;
+      line-height: 1;
+    }
 
-        {/* Main time display */}
-        <div style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "center",
-          gap: "4px",
-          lineHeight: 1,
-        }}>
-          <TimeDigit value={hours} />
-          <Colon time={time} />
-          <TimeDigit value={minutes} />
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            marginLeft: "10px",
-            marginBottom: "6px",
-            alignSelf: "flex-end",
-          }}>
-            <span style={{
-              fontSize: "14px",
-              fontWeight: 400,
-              color: "rgba(99,180,255,0.45)",
-              letterSpacing: "2px",
-              lineHeight: 1,
-              marginBottom: "4px",
-            }}>
-              {ampm}
-            </span>
-            <span style={{
-              fontSize: "28px",
-              fontWeight: 300,
-              color: "rgba(255,255,255,0.2)",
-              fontVariantNumeric: "tabular-nums",
-              minWidth: "48px",
-              textAlign: "left",
-              lineHeight: 1,
-            }}>
-              {seconds}
-            </span>
-          </div>
-        </div>
+    .date-display {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.35);
+      margin-top: 32px;
+      letter-spacing: 1px;
+    }
 
-        {/* Date display */}
-        <div style={{
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: "17px",
-          fontWeight: 300,
-          color: "rgba(255,255,255,0.35)",
-          marginTop: "32px",
-          letterSpacing: "1px",
-        }}>
-          {month} {date}{suffix}, {year}
-        </div>
+    .progress-row {
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
 
-        {/* Day progress bar */}
-        <div style={{
-          marginTop: "28px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "12px",
-        }}>
-          <span style={{
-            fontSize: "9px",
-            fontWeight: 400,
-            color: "rgba(255,255,255,0.15)",
-            letterSpacing: "3px",
-            textTransform: "uppercase",
-          }}>
-            DAY
-          </span>
-          <div style={{
-            width: "160px",
-            height: "2px",
-            background: "rgba(255,255,255,0.06)",
-            borderRadius: "1px",
-            overflow: "hidden",
-          }}>
-            <div style={{
-              height: "100%",
-              width: `${progress}%`,
-              background: "linear-gradient(90deg, rgba(99,180,255,0.3), rgba(99,180,255,0.6))",
-              borderRadius: "1px",
-              transition: "width 1s linear",
-            }} />
-          </div>
-          <span style={{
-            fontSize: "9px",
-            fontWeight: 400,
-            color: "rgba(255,255,255,0.15)",
-            letterSpacing: "1px",
-            fontVariantNumeric: "tabular-nums",
-            minWidth: "32px",
-          }}>
-            {progress.toFixed(0)}%
-          </span>
-        </div>
+    .progress-label {
+      font-size: 9px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.15);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      width: 160px;
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, rgba(99,180,255,0.3), rgba(99,180,255,0.6));
+      border-radius: 1px;
+      transition: width 1s linear;
+    }
+
+    .progress-pct {
+      font-size: 9px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.15);
+      letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+      min-width: 32px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow"></div>
+
+  <div class="clock-wrapper" id="clock">
+    <div class="day-label" id="dayName"></div>
+
+    <div class="time-row">
+      <span class="time-digit" id="hours"></span>
+      <span class="colon">:</span>
+      <span class="time-digit" id="minutes"></span>
+      <div class="side-info">
+        <span class="ampm" id="ampm"></span>
+        <span class="seconds" id="seconds"></span>
       </div>
-
-      <style>{`
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.2; }
-        }
-      `}</style>
     </div>
-  );
-}
 
-function TimeDigit({ value }) {
-  return (
-    <span style={{
-      fontSize: "96px",
-      fontWeight: 300,
-      color: "rgba(255,255,255,0.9)",
-      fontVariantNumeric: "tabular-nums",
-      letterSpacing: "-2px",
-    }}>
-      {value}
-    </span>
-  );
-}
+    <div class="date-display" id="dateDisplay"></div>
 
-function Colon({ time }) {
-  return (
-    <span style={{
-      fontSize: "80px",
-      fontWeight: 200,
-      color: "rgba(99,180,255,0.5)",
-      animation: "blink 2s ease-in-out infinite",
-      marginLeft: "2px",
-      marginRight: "2px",
-      lineHeight: 1,
-      position: "relative",
-      top: "-4px",
-    }}>
-      :
-    </span>
-  );
-}
+    <div class="progress-row">
+      <span class="progress-label">DAY</span>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <span class="progress-pct" id="progressPct"></span>
+    </div>
+  </div>
+
+  <script>
+    const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    function getSuffix(d) {
+      if (d === 1 || d === 21 || d === 31) return "st";
+      if (d === 2 || d === 22) return "nd";
+      if (d === 3 || d === 23) return "rd";
+      return "th";
+    }
+
+    function update() {
+      const now = new Date();
+      const rawH = now.getHours();
+      const h12 = rawH % 12 || 12;
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const ap = rawH >= 12 ? "PM" : "AM";
+      const date = now.getDate();
+      const progress = ((rawH * 3600 + m * 60 + s) / 86400) * 100;
+
+      document.getElementById("dayName").textContent = dayNames[now.getDay()];
+      document.getElementById("hours").textContent = String(h12).padStart(2, "0");
+      document.getElementById("minutes").textContent = String(m).padStart(2, "0");
+      document.getElementById("seconds").textContent = String(s).padStart(2, "0");
+      document.getElementById("ampm").textContent = ap;
+      document.getElementById("dateDisplay").textContent = monthNames[now.getMonth()] + " " + date + getSuffix(date) + ", " + now.getFullYear();
+      document.getElementById("progressFill").style.width = progress + "%";
+      document.getElementById("progressPct").textContent = Math.round(progress) + "%";
+    }
+
+    update();
+    setInterval(update, 1000);
+
+    setTimeout(() => document.getElementById("clock").classList.add("loaded"), 100);
+  </script>
+</body>
+</html>
